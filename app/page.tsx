@@ -1,23 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CloudRain,
   Heart,
   Mail,
   MapPin,
+  Moon,
   Music2,
   PauseCircle,
   PlayCircle,
   Sparkles,
+  Sun,
 } from "lucide-react";
 
-const sections = {
-  initial: { opacity: 0, y: 24 },
+const sectionMotion = {
+  initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: "easeOut" },
-  viewport: { once: true, amount: 0.3 },
+  transition: { duration: 0.7, ease: "easeOut" },
+  viewport: { once: true, amount: 0.35 },
 };
 
 const bgmUrl =
@@ -35,6 +37,14 @@ const dailyPromises = [
   "사진 한 장씩 공유하기",
   "오늘의 하이라이트를 음성으로 보내기",
   "서로의 하루에 별칭 붙여주기",
+];
+
+const moodTags = [
+  "포근함",
+  "두근두근",
+  "평온함",
+  "보고싶음",
+  "기대감",
 ];
 
 function getTimeString(timeZone: string) {
@@ -98,6 +108,7 @@ export default function HomePage() {
   const [rate, setRate] = useState(980);
   const [krw, setKrw] = useState(10000);
   const [cad, setCad] = useState(10.2);
+  const [moodIndex, setMoodIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
   const raindrops = useMemo(
@@ -129,22 +140,29 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const parent = canvas.parentElement;
-    if (parent) {
-      canvas.width = parent.clientWidth;
-      canvas.height = parent.clientHeight;
-    }
-    const { width, height } = canvas;
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, "#F7CAC9");
-    gradient.addColorStop(1, "#92A8D1");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-    ctx.globalCompositeOperation = "destination-out";
+    if (!canvas) return;
+
+    const drawCover = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const parent = canvas.parentElement;
+      if (parent) {
+        canvas.width = parent.clientWidth;
+        canvas.height = parent.clientHeight;
+      }
+      const { width, height } = canvas;
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#F7CAC9");
+      gradient.addColorStop(1, "#92A8D1");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalCompositeOperation = "destination-out";
+    };
+
+    drawCover();
+    window.addEventListener("resize", drawCover);
+    return () => window.removeEventListener("resize", drawCover);
   }, []);
 
   const toggleBgm = async () => {
@@ -176,6 +194,7 @@ export default function HomePage() {
   };
 
   const handleRateChange = (value: number) => {
+    if (!value) return;
     setRate(value);
     setCad(Number((krw / value).toFixed(2)));
   };
@@ -191,7 +210,8 @@ export default function HomePage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 px-5 pb-20 pt-10">
+    <main className="relative mx-auto flex min-h-screen max-w-md flex-col gap-6 px-5 pb-24 pt-12">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.8),transparent_55%)]" />
       <header className="glass-card flex items-center justify-between px-5 py-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-rose-400">
@@ -200,6 +220,9 @@ export default function HomePage() {
           <h1 className="mt-1 text-2xl font-semibold text-slate-900">
             Our Galaxy 🚀
           </h1>
+          <p className="mt-1 text-xs text-slate-500">
+            우리의 시간대가 겹치는 순간을 모아두는 공간
+          </p>
         </div>
         <button
           type="button"
@@ -213,7 +236,7 @@ export default function HomePage() {
       </header>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -234,10 +257,15 @@ export default function HomePage() {
         <div className="rounded-2xl bg-rose-50/70 px-4 py-3 text-center text-sm text-rose-500">
           {greeting}
         </div>
+        <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+          <Sun size={14} className="text-rose-300" />
+          서울 & 밴쿠버가 동시에 깨어있는 시간 체크
+          <Moon size={14} className="text-serenity" />
+        </div>
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card relative overflow-hidden px-5 py-6"
       >
         <div className="absolute inset-0">
@@ -267,7 +295,7 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-5 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -291,7 +319,7 @@ export default function HomePage() {
             <motion.div
               key={item.label}
               className="rounded-2xl bg-white/80 px-2 py-3 shadow-soft"
-              animate={{ scale: [1, 1.05, 1] }}
+              animate={{ scale: [1, 1.08, 1] }}
               transition={{ duration: 0.6 }}
             >
               <div className="text-2xl font-semibold text-slate-900">
@@ -304,7 +332,7 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -322,8 +350,6 @@ export default function HomePage() {
           </div>
           <canvas
             ref={canvasRef}
-            width={320}
-            height={120}
             className="absolute inset-0 h-full w-full touch-none"
             onPointerDown={(event) => {
               isDrawing.current = true;
@@ -347,7 +373,42 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
+        className="glass-card space-y-4 px-5 py-6"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-500">오늘의 무드</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
+              우리 마음 온도 체크
+            </h2>
+          </div>
+          <Music2 className="text-serenity" size={28} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {moodTags.map((tag, index) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setMoodIndex(index)}
+              className={`rounded-full px-4 py-2 text-xs transition ${
+                moodIndex === index
+                  ? "bg-rose-400 text-white shadow-soft"
+                  : "bg-white/80 text-slate-500"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        <div className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-soft">
+          오늘의 무드는 <span className="font-semibold">{moodTags[moodIndex]}</span>
+          이야. 서로의 감정 온도를 공유해줘 💗
+        </div>
+      </motion.section>
+
+      <motion.section
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -393,7 +454,7 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -405,9 +466,12 @@ export default function HomePage() {
           </div>
           <MapPin className="text-rose-400" size={28} />
         </div>
-        <div className="relative h-40 overflow-hidden rounded-3xl bg-gradient-to-br from-serenity/30 via-white to-rose-100">
+        <div className="relative h-44 overflow-hidden rounded-3xl bg-gradient-to-br from-serenity/30 via-white to-rose-100">
           <div className="absolute inset-0 opacity-20">
             <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.8),transparent_60%)]" />
+          </div>
+          <div className="absolute inset-x-4 top-4 rounded-2xl bg-white/90 px-4 py-3 text-xs text-slate-600 shadow-soft">
+            추억 목록: 그랜빌 아일랜드, 스탠리 파크, 한강 산책
           </div>
           <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-soft">
             <MapPin size={16} className="text-rose-400" />
@@ -417,7 +481,7 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -442,7 +506,7 @@ export default function HomePage() {
       </motion.section>
 
       <motion.section
-        {...sections}
+        {...sectionMotion}
         className="glass-card space-y-4 px-5 py-6"
       >
         <div className="flex items-center justify-between">
@@ -454,9 +518,18 @@ export default function HomePage() {
           </div>
           <Heart className="text-rose-400" size={28} />
         </div>
-        <div className="rounded-3xl bg-white/80 px-4 py-5 text-center text-base font-medium text-slate-700 shadow-soft">
-          {dailyPromises[promiseIndex]}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={dailyPromises[promiseIndex]}
+            className="rounded-3xl bg-white/80 px-4 py-5 text-center text-base font-medium text-slate-700 shadow-soft"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
+          >
+            {dailyPromises[promiseIndex]}
+          </motion.div>
+        </AnimatePresence>
         <button
           type="button"
           onClick={() =>
